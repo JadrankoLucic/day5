@@ -89,6 +89,10 @@
   <ItemGroup>
     <ClCompile Include="..\tool\block.cpp" />
     <ClCompile Include="..\tool\block_add.cpp" />
+    <ClCompile Include="..\tool\block_lim.cpp" />
+    <ClCompile Include="..\tool\block_mult.cpp" />
+    <ClCompile Include="..\tool\block_neg.cpp" />
+    <ClCompile Include="..\tool\block_queq.cpp" />
     <ClCompile Include="tests.cpp" />
     <ClCompile Include="tool_test.cpp" />
   </ItemGroup>

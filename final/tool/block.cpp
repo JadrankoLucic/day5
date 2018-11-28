@@ -1,8 +1,11 @@
 #include "stdafx.h"
 #include "block.h"
 #include <vector>
-#include <iostream>
+//#include <iostream>
 #include <algorithm>
+#include <numeric>
+#include <sstream>
+#include "menus.h"
 
 #pragma region block
 block::block(std::string block_type_name, int number_of_parameters, const std::vector<double>& parameters)
@@ -15,13 +18,13 @@ block::block(std::string block_type_name, int number_of_parameters, const std::v
 
 std::string block::get_command()
 {
-  std::string arguments;
-
-  std::for_each(parameters_.begin(), parameters_.end(), [&](double const &par) {
-    arguments += std::to_string(par) + " ";
+  std::string arguments = std::accumulate(parameters_.begin(), parameters_.end(), std::string(),
+  [](std::string &args, double &par)
+  {
+    return args.empty() ? std::to_string(par) : args + " " + std::to_string(par);
   });
 
-  return block_type_name_ + " " + arguments;
+  return block_type_name_ + (arguments.empty() ? "" : " " + arguments);
 }
 
 //block::~block() {};
@@ -70,12 +73,76 @@ void block_processor::load(sequence_list sl)
   }
 }
 
+bool block_processor::load_from_stream(std::istream &is)
+{
+  //check streams
+  if (!is.good()) { return false; }
+
+  sequence_list stored_blocks;
+  std::string block_line;
+  std::istringstream line_stream;
+  while (std::getline(is, block_line)) {
+    const std::pair<std::string, std::vector<double>> block_command = get_block_command_from_text(block_line);
+    stored_blocks.push_back(block_command);
+  }
+  load(stored_blocks);
+  return true;
+}
+
 bool block_processor::remove_block(unsigned int index)
 {
   if (index > blocks_.size())
     return false;
   blocks_.erase(blocks_.begin() + index - 1);
   return true;
+}
+
+bool block_processor::bulk_calc(std::istream &is, std::ostream &os) const
+{
+  //check streams
+  if (!os.good() || !is.good()) { return false; }
+
+  //load inputs from input stream
+  double input_value;
+  std::vector<double> inputs_for_calc;
+  std::string input_line;
+
+  std::istringstream line_stream;
+  while (getline(is, input_line)) {
+    std::stringstream input_ss(input_line);
+    if (input_ss >> input_value)
+      inputs_for_calc.push_back(input_value);
+    else
+      return false;
+  }
+
+  //calculate each input value and send to output stream
+  for (std::vector<double>::iterator it = inputs_for_calc.begin(); it != inputs_for_calc.end(); ++it)
+    os << calc_all(*it) << std::endl;
+
+  return true;
+}
+
+std::pair<std::string, std::vector<double>> block_processor::get_block_command_from_text(std::string command_text)
+{
+  bool block_name_taken = false;
+  std::string block_name;
+  std::vector<double> parameters;
+  std::istringstream line_ss(command_text);
+  do
+  {
+    std::string value;
+    line_ss >> value;
+    if (value == "") break;
+    if (!block_name_taken)
+    {
+      block_name = value;
+      block_name_taken = true;
+    }
+    else
+      parameters.push_back(atof(value.c_str()));
+  } while (!line_ss.eof());
+  return std::pair<std::string, std::vector<double>>(block_name, parameters);
 }
 #pragma endregion block_processor
 

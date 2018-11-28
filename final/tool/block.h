@@ -51,8 +51,11 @@ public:
   double calc_all(double input) const;
   using sequence_list = std::vector<std::pair<std::string, std::vector<double>>>;
   void load(sequence_list sl);
+  bool load_from_stream(std::istream &is);
   bool remove_block(unsigned int index);
   std::vector<std::string> get_sequence();
+  bool bulk_calc(std::istream &is, std::ostream &os) const;
+  static std::pair<std::string, std::vector<double>> get_block_command_from_text(std::string command_text);
 };
 
 //prevent class derivation with 'final'
