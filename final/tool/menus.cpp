@@ -10,6 +10,7 @@
 #include <algorithm>
 #include "menus.h"
 #include <iterator>
+#include <numeric>
 
 void press_enter_to_go_back()
 {
@@ -27,6 +28,11 @@ unsigned int get_number_from_console(std::string caption)
     getline(std::cin, input);
     // This code converts from string to number safely.
     std::stringstream input_ss(input);
+    //instead, we could use:
+    //https://en.cppreference.com/w/cpp/string/basic_string/stol
+    //https://en.cppreference.com/w/cpp/string/basic_string/stof
+    //but in that case we would have to catch exception.
+    //with current code we have 'try' approach
     if (input_ss >> user_number)
       break;
     std::cout << "Invalid number, please try again..." << std::endl;
@@ -63,9 +69,11 @@ void show_available_block_types()
   //show available block types
   system("cls");
   std::string block_list_menu = "Available block types:\n";
-  std::vector<std::string> block_list = block_factory::GetBlockTypes();
-  for (std::vector<std::string>::iterator it = block_list.begin(); it != block_list.end(); ++it)
-    block_list_menu += *it;
+  std::vector<std::string> block_list = block_factory::get_block_infos();
+  //for (std::vector<std::string>::iterator it = block_list.begin(); it != block_list.end(); ++it)
+  //  block_list_menu += *it;
+  block_list_menu = std::accumulate(block_list.begin(), block_list.end(), block_list_menu);
+
   std::cout << block_list_menu << std::endl;
 }
 
@@ -74,13 +82,17 @@ void show_block_sequence(block_processor &bp)
   //show block sequence
   system("cls");
   std::cout << "Block sequence:\n" << std::endl;
-  int index = 0;
+
   std::vector<std::string> temp_v = bp.get_sequence();
-  std::for_each(temp_v.begin(), temp_v.end(), [&](std::string const &c)
-  {
-    index++;
-    std::cout << index << ":\t" << c << std::endl;
-  });
+  std::for_each(temp_v.begin(), temp_v.end(), [index = 0](std::string const &c) mutable { index++;  std::cout << index << ":\t" << c << std::endl; });
+
+  //int index = 0;
+  //std::vector<std::string> temp_v = bp.get_sequence();
+  //std::for_each(temp_v.begin(), temp_v.end(), [&](std::string const &c)
+  //{
+  //  index++;
+  //  std::cout << index << ":\t" << c << std::endl;
+  //});
 }
 
 bool add_new_block(block_processor &bp)
@@ -97,9 +109,9 @@ bool add_new_block(block_processor &bp)
     try
     {
       std::pair<std::string, std::vector<double>> p = block_processor::get_block_command_from_text(input);
-      std::unique_ptr<block> bl = block_factory::Create(p.first, p.second);
+      std::unique_ptr<block> bl = block_factory::create(p.first, p.second);
       if (bl == nullptr) return false;
-      bp.add_block(bl);
+      bp.add_block(std::move(bl));
       return true;
     }
     catch (...)
@@ -137,7 +149,7 @@ void load_from_file(block_processor &bp, std::string &file_name)
 
   if (!parameters_stream.is_open())
   {
-    std::cout << "ERROR: Block sequence cannot be loaded from '" << file_name << "' file.\n" << std::endl;
+    std::cout << "INFO: Block sequence cannot be loaded from '" << file_name << "' file.\n" << std::endl;
     return;
   }
   try

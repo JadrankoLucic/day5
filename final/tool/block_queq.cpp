@@ -3,7 +3,7 @@
 #include "block.h"
 #include "self_registered_in_factory.h"
 
-queq::queq(const std::vector<double>& parameters) : block(GetFactoryName(), 3, parameters)
+queq::queq(const std::vector<double>& parameters) : block(GetBlockTypeName(), 3, parameters)
 {
   initial_value_a_ = parameters[0];
   initial_value_b_ = parameters[1];
@@ -16,4 +16,4 @@ double queq::calc(double input)
   return initial_value_a_ * input * input + initial_value_b_ * input + initial_value_c_;
 }
 
-std::string self_registered_in_factory<queq>::description_ = "Quadratic equation (ax^2 + bx + c). Example: queq 1 2 3";
+//std::string self_registered_in_factory<queq>::description_ = "Quadratic equation (ax^2 + bx + c). Example: queq 1 2 3";

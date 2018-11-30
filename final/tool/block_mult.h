@@ -6,7 +6,7 @@
 class mult : public block, public self_registered_in_factory<mult>
 {
 private:
-  double initial_value_;
+  double initial_value_{};
 public:
   mult(const std::vector<double>& parameters);
   double calc(double input) override;
@@ -14,5 +14,7 @@ public:
   static std::unique_ptr<block> CreateMethod(const std::vector<double>& parameters) {
     return std::make_unique<mult>(parameters);
   }
-  static std::string GetFactoryName() { return "mult"; }
+
+  inline static const char* name = "mult";
+  inline static const char* description = "Multiply input value with parameter value. Example: mult 5";
 };

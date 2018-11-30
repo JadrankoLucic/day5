@@ -15,5 +15,7 @@ public:
   static std::unique_ptr<block> CreateMethod(const std::vector<double>& parameters) {
     return std::make_unique<lim>(parameters);
   }
-  static std::string GetFactoryName() { return "lim"; }
+
+  inline static const char* name = "lim";
+  inline static const char* description = "Limit between numbers. Example: lim 0 100";
 };

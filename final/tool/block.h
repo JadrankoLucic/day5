@@ -22,11 +22,12 @@ class block_meta
 {
 public:
   using TBlockCreateMethod = std::unique_ptr<block>(*)(const std::vector<double>& parameter);
-  block_meta(std::string description = "", TBlockCreateMethod block_create_method = nullptr)
-  {
-    description_ = description;
-    block_create_method_ = block_create_method;
-  }
+  explicit block_meta(std::string description = "", TBlockCreateMethod block_create_method = nullptr)
+    : description_{ std::move(description) }, block_create_method_{ block_create_method } { }
+  //{
+  //  description_ = description;
+  //  block_create_method_ = block_create_method;
+  //}
   TBlockCreateMethod GetCreateMethod() const
   {
     return block_create_method_;
@@ -38,7 +39,7 @@ public:
 
 private:
   std::string description_;
-  TBlockCreateMethod block_create_method_;
+  TBlockCreateMethod block_create_method_{};
 };
 
 class block_processor
@@ -47,10 +48,10 @@ private:
   std::vector<std::unique_ptr<block>> blocks_;
 public:
   block_processor();
-  void add_block(std::unique_ptr<block> &b);
+  void add_block(std::unique_ptr<block> b);
   double calc_all(double input) const;
   using sequence_list = std::vector<std::pair<std::string, std::vector<double>>>;
-  void load(sequence_list sl);
+  void load(const sequence_list& sl);
   bool load_from_stream(std::istream &is);
   bool remove_block(unsigned int index);
   std::vector<std::string> get_sequence();
@@ -67,9 +68,9 @@ public:
   block_factory() = delete;
   //all members are static
   //wrap static methods in this separate class because I want to have it in one place and 'create_methods_' has to be hidden
-  static bool Register(const std::string block_name, const std::string block_description, TBlockCreateMethod funcCreateBlock);
-  static std::unique_ptr<block> Create(const std::string& block_name, const std::vector<double>& parameters);
-  static std::vector<std::string> GetBlockTypes();
+  static bool register_block(const std::string block_name, const std::string block_description, TBlockCreateMethod funcCreateBlock);
+  static std::unique_ptr<block> create(const std::string& block_name, const std::vector<double>& parameters);
+  static std::vector<std::string> get_block_infos();
 private:
   static std::map<std::string, block_meta> create_methods_;
 };

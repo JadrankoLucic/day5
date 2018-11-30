@@ -36,18 +36,20 @@ block_processor::block_processor()
 
 }
 
-void block_processor::add_block(std::unique_ptr<block> &b)
+void block_processor::add_block(std::unique_ptr<block> b)
 {
   blocks_.push_back(std::move(b));
 }
 
 double block_processor::calc_all(double input) const
 {
-  double calculated_value = input;
-  for (auto const& b : blocks_)
+  const double calculated_value = std::accumulate(blocks_.begin(), blocks_.end(), input,
+    //with below 'const' we are promising that variable 'b' will not (and cannot) be changed.
+    [](double intermediate_value, const std::unique_ptr<block> &b)
   {
-    calculated_value = (*b).calc(calculated_value);
-  }
+    return intermediate_value = (*b).calc(intermediate_value);
+  });
+
   return calculated_value;
 }
 
@@ -62,14 +64,14 @@ std::vector<std::string> block_processor::get_sequence()
   return temp_vector;
 }
 
-void block_processor::load(sequence_list sl)
+void block_processor::load(const sequence_list& sl)
 {
   blocks_.clear();
-  for (sequence_list::iterator it = sl.begin(); it != sl.end(); ++it) {
+  for (sequence_list::const_iterator it = sl.begin(); it != sl.end(); ++it) {
     const std::string block_name = (*it).first;
     const std::vector<double> parameter_values = it->second;
-    std::unique_ptr<block> bl = block_factory::Create(block_name, parameter_values);
-    blocks_.push_back(std::move(bl));
+    std::unique_ptr<block> bl = block_factory::create(block_name, parameter_values);
+    add_block(std::move(bl));
   }
 }
 
@@ -140,7 +142,8 @@ std::pair<std::string, std::vector<double>> block_processor::get_block_command_f
       block_name_taken = true;
     }
     else
-      parameters.push_back(atof(value.c_str()));
+      parameters.push_back(std::stof(value));
+      //parameters.push_back(atof(value.c_str()));
   } while (!line_ss.eof());
   return std::pair<std::string, std::vector<double>>(block_name, parameters);
 }
@@ -151,18 +154,18 @@ using TBlockCreateMethod = std::unique_ptr<block>(*)(const std::vector<double>& 
 
 std::map<std::string, block_meta> block_factory::create_methods_;
 
-bool block_factory::Register(const std::string block_name, const std::string block_description, TBlockCreateMethod funcCreateBlock)
+bool block_factory::register_block(const std::string block_name, const std::string block_description, TBlockCreateMethod funcCreateBlock)
 {
   if (auto it = create_methods_.find(block_name); it == create_methods_.end())
   { 
     create_methods_[block_name] = block_meta(block_description, funcCreateBlock);
-    //std::cout << "LOG: block_factory::Register for block: " + block_name << std::endl;
+    //std::cout << "LOG: block_factory::register_block for block: " + block_name << std::endl;
     return true;
   }
   return false;
 }
 
-std::unique_ptr<block> block_factory::Create(const std::string& block_name, const std::vector<double>& parameters)
+std::unique_ptr<block> block_factory::create(const std::string& block_name, const std::vector<double>& parameters)
 {
   if (auto it = create_methods_.find(block_name); it != create_methods_.end())
   {
@@ -172,22 +175,22 @@ std::unique_ptr<block> block_factory::Create(const std::string& block_name, cons
   return nullptr;
 }
 
-std::vector<std::string> block_factory::GetBlockTypes()
+std::vector<std::string> block_factory::get_block_infos()
 {
   //Vector of int to store values
   std::vector<std::string> temp_vector;
   temp_vector.reserve(create_methods_.size());
 
   //First solution: Copy all value fields from map to a vector using transform() & Lambda function
-  //std::transform(create_methods_.begin(), create_methods_.end(), std::back_inserter(temp_vector), [](std::pair<std::string, block_meta> const &m)
-  //{
-  //  return m.first + " : " + m.second.Getdescription() + "\n";
-  //});
+  std::transform(create_methods_.begin(), create_methods_.end(), std::back_inserter(temp_vector), [](std::pair<std::string, block_meta> const &m)
+  {
+    return m.first + "\t" + m.second.Getdescription() + "\n";  
+  });
 
   //Second solution: Copy all value fields from map to a vector using Lambda function
-  std::for_each(create_methods_.begin(), create_methods_.end(), [&](std::pair<std::string, block_meta> const &m) {
-    temp_vector.push_back(m.first + "\t" + m.second.Getdescription() + "\n");
-  });
+  //std::for_each(create_methods_.begin(), create_methods_.end(), [&](std::pair<std::string, block_meta> const &m) {
+  //  temp_vector.push_back(m.first + "\t" + m.second.Getdescription() + "\n");
+  //});
 
   return temp_vector;
 }

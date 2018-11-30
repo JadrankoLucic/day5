@@ -10,7 +10,7 @@ class add :
   public self_registered_in_factory<add>
 {
 private:
-  double initial_value_;
+  double initial_value_{};
 public:
   add(const std::vector<double>& parameters);
   double calc(double input) override;
@@ -18,5 +18,7 @@ public:
   static std::unique_ptr<block> CreateMethod(const std::vector<double>& parameters) {
     return std::make_unique<add>(parameters);
   }
-  static std::string GetFactoryName() { return "add"; }
+
+  inline static const char* name = "add";
+  inline static const char* description = "Summarize input with parameter value. Example: add 5";
 };

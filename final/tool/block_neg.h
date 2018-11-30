@@ -5,8 +5,6 @@
 
 class neg : public block, public self_registered_in_factory<neg>
 {
-private:
-  //double initial_value_;
 public:
   neg(const std::vector<double>& parameters);
   double calc(double input) override;
@@ -14,5 +12,7 @@ public:
   static std::unique_ptr<block> CreateMethod(const std::vector<double>& parameters) {
     return std::make_unique<neg>(parameters);
   }
-  static std::string GetFactoryName() { return "neg"; }
+
+  inline static const char* name = "neg";
+  inline static const char* description = "Negation of input value. Example: neg";
 };

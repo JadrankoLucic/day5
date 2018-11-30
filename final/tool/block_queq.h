@@ -16,5 +16,7 @@ public:
   static std::unique_ptr<block> CreateMethod(const std::vector<double>& parameters) {
     return std::make_unique<queq>(parameters);
   }
-  static std::string GetFactoryName() { return "queq"; }
+
+  inline static const char* name = "queq";
+  inline static const char* description = "Quadratic equation (ax^2 + bx + c). Example: queq 1 2 3";
 };
